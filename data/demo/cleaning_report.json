@@ -1,0 +1,56 @@
+{
+  "cleaning_version": "1",
+  "before": {
+    "conversations": 58,
+    "messages": 113
+  },
+  "after": {
+    "conversations": 54,
+    "messages": 108
+  },
+  "messages_removed_empty": 0,
+  "messages_collapsed_duplicate": 0,
+  "excluded_by_reason": {
+    "duplicate_content": 1,
+    "incomplete_no_agent_reply": 3
+  },
+  "exclusions": [
+    {
+      "conversation_id": "conv-0050",
+      "reason": "incomplete_no_agent_reply",
+      "original_conversation_id": null,
+      "detail": "no agent reply; flagged as incomplete"
+    },
+    {
+      "conversation_id": "conv-0051",
+      "reason": "incomplete_no_agent_reply",
+      "original_conversation_id": null,
+      "detail": "no agent reply; flagged as incomplete"
+    },
+    {
+      "conversation_id": "conv-0052",
+      "reason": "incomplete_no_agent_reply",
+      "original_conversation_id": null,
+      "detail": "no agent reply; flagged as incomplete"
+    },
+    {
+      "conversation_id": "conv-0058",
+      "reason": "duplicate_content",
+      "original_conversation_id": "conv-0003",
+      "detail": "same customer and messages as earlier record 'conv-0003'"
+    }
+  ],
+  "message_actions": [],
+  "source_file": "data/demo/conversations.jsonl",
+  "loader": {
+    "rows_read": 62,
+    "rows_accepted": 58,
+    "rows_rejected": 4,
+    "rejections": [
+      "line 21: messages[0].role must be 'customer' or 'agent', got 'custmer'",
+      "line 55: messages[0].text must not be empty",
+      "line 61: messages is missing",
+      "line 62: invalid JSON: Expecting value (column 47)"
+    ]
+  }
+}
