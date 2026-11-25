@@ -1,0 +1,180 @@
+{
+  "brand": "DemoBrand",
+  "seed": 42,
+  "description": "Synthetic demo transcripts with planted problems. All names, contact details, addresses, and order references are fictional.",
+  "labels": {
+    "conv-0001": "product_inquiry",
+    "conv-0002": "product_inquiry",
+    "conv-0003": "pricing",
+    "conv-0004": "pricing",
+    "conv-0005": "delivery",
+    "conv-0006": "delivery",
+    "conv-0007": "returns",
+    "conv-0008": "returns",
+    "conv-0009": "refunds",
+    "conv-0010": "refunds",
+    "conv-0011": "warranty",
+    "conv-0012": "warranty",
+    "conv-0013": "troubleshooting",
+    "conv-0014": "troubleshooting",
+    "conv-0015": "complaints",
+    "conv-0016": "complaints",
+    "conv-0017": "general_support",
+    "conv-0018": "general_support",
+    "conv-0019": "product_inquiry",
+    "conv-0020": "product_inquiry",
+    "conv-0021": "pricing",
+    "conv-0022": "pricing",
+    "conv-0023": "delivery",
+    "conv-0024": "delivery",
+    "conv-0025": "returns",
+    "conv-0026": "returns",
+    "conv-0027": "refunds",
+    "conv-0028": "refunds",
+    "conv-0029": "warranty",
+    "conv-0030": "warranty",
+    "conv-0031": "troubleshooting",
+    "conv-0032": "troubleshooting",
+    "conv-0033": "complaints",
+    "conv-0034": "complaints",
+    "conv-0035": "general_support",
+    "conv-0036": "general_support",
+    "conv-0037": "product_inquiry",
+    "conv-0038": "product_inquiry",
+    "conv-0039": "pricing",
+    "conv-0040": "pricing",
+    "conv-0041": "delivery",
+    "conv-0042": "delivery",
+    "conv-0043": "returns",
+    "conv-0044": "returns",
+    "conv-0045": "refunds",
+    "conv-0046": "refunds",
+    "conv-0047": "warranty",
+    "conv-0048": "warranty",
+    "conv-0049": "troubleshooting",
+    "conv-0050": "troubleshooting",
+    "conv-0051": "complaints",
+    "conv-0052": "complaints",
+    "conv-0053": "general_support",
+    "conv-0054": "general_support",
+    "conv-0055": "product_inquiry",
+    "conv-0056": "product_inquiry",
+    "conv-0057": "pricing",
+    "conv-0058": "pricing",
+    "conv-0059": "delivery",
+    "conv-0060": "delivery"
+  },
+  "planted_issues": [
+    {
+      "conversation_id": "conv-0004",
+      "issue": "pii_phone",
+      "value": "+254 700 000 704"
+    },
+    {
+      "conversation_id": "conv-0008",
+      "issue": "pii_name",
+      "value": "Irene Wekesa"
+    },
+    {
+      "conversation_id": "conv-0012",
+      "issue": "pii_address",
+      "value": "88 Mombasa Road, Nairobi"
+    },
+    {
+      "conversation_id": "conv-0016",
+      "issue": "pii_order",
+      "value": "ORD-733052"
+    },
+    {
+      "conversation_id": "conv-0020",
+      "issue": "pii_email",
+      "value": "brian.njeri81@example.com"
+    },
+    {
+      "conversation_id": "conv-0024",
+      "issue": "pii_phone",
+      "value": "+254 700 000 975"
+    },
+    {
+      "conversation_id": "conv-0028",
+      "issue": "pii_name",
+      "value": "Felix Wekesa"
+    },
+    {
+      "conversation_id": "conv-0032",
+      "issue": "pii_address",
+      "value": "98 Mombasa Road, Nairobi"
+    },
+    {
+      "conversation_id": "conv-0036",
+      "issue": "pii_order",
+      "value": "ORD-380746"
+    },
+    {
+      "conversation_id": "conv-0040",
+      "issue": "pii_email",
+      "value": "cynthia.njeri18@example.com"
+    },
+    {
+      "conversation_id": "conv-0044",
+      "issue": "pii_phone",
+      "value": "+254 700 000 193"
+    },
+    {
+      "conversation_id": "conv-0048",
+      "issue": "pii_name",
+      "value": "John Mwangi"
+    },
+    {
+      "conversation_id": "conv-0050",
+      "issue": "incomplete_no_agent_reply"
+    },
+    {
+      "conversation_id": "conv-0051",
+      "issue": "incomplete_no_agent_reply"
+    },
+    {
+      "conversation_id": "conv-0052",
+      "issue": "pii_address",
+      "value": "197 Mombasa Road, Nairobi"
+    },
+    {
+      "conversation_id": "conv-0052",
+      "issue": "incomplete_no_agent_reply"
+    },
+    {
+      "conversation_id": "conv-0055",
+      "issue": "empty_customer_message"
+    },
+    {
+      "conversation_id": "conv-0056",
+      "issue": "pii_order",
+      "value": "ORD-632342"
+    },
+    {
+      "conversation_id": "conv-0060",
+      "issue": "pii_email",
+      "value": "cynthia.otieno77@example.com"
+    },
+    {
+      "conversation_id": "conv-0058",
+      "issue": "duplicate_of",
+      "duplicate_of": "conv-0003"
+    },
+    {
+      "conversation_id": "conv-0021",
+      "issue": "invalid_role",
+      "value": "custmer"
+    },
+    {
+      "line": 61,
+      "conversation_id": "conv-0061",
+      "issue": "missing_messages_field"
+    },
+    {
+      "line": 62,
+      "conversation_id": "conv-0062",
+      "issue": "invalid_json"
+    }
+  ]
+}
