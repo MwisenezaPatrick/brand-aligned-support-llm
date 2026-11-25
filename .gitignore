@@ -26,7 +26,7 @@ data/processed/*
 data/*.jsonl
 
 # Generated reports
-evaluation/reports/
+evaluation/reports/*
 
 # IDE and system files
 .vscode/
@@ -39,5 +39,4 @@ Thumbs.db
 !artifacts/.gitkeep
 !data/raw/.gitkeep
 !data/processed/.gitkeep
-!evaluation/reports/
 !evaluation/reports/.gitkeep
