@@ -1,8 +1,10 @@
-"""Clean loaded customer-support conversations.
+﻿"""Clean loaded customer-support conversations.
 
 Input is the canonical conversation list produced by the loaders in
 training/data/ingest.py. Output is a new list containing only conversations
 that are complete and unique, plus a report of every change and exclusion.
+Excluded conversations are also returned, already normalized, so the
+redaction step can cover them as well.
 
 This module never reads or writes files and never modifies its input. Cleaning
 is deterministic: the same input always gives the same output and report.
@@ -144,19 +146,42 @@ class CleaningReport:
 
 @dataclass
 class CleaningResult:
+    """conversations: the kept set. excluded: excluded conversations, normalized
+    but not filtered, in input order. report: what changed and why."""
+
     conversations: list[dict[str, Any]]
     report: CleaningReport
+    excluded: list[dict[str, Any]] = field(default_factory=list)
 
 
 def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
-    """Clean canonical conversations. The input must already pass validate_conversation."""
+    """Clean canonical conversations. The input must already pass validate_conversation.
+
+    The input is not modified. Excluded conversations are returned in `excluded`,
+    already normalized, so redaction can cover them. They never appear in
+    `conversations`.
+    """
     report = CleaningReport(
         input_conversations=len(conversations),
         input_messages=sum(len(conversation["messages"]) for conversation in conversations),
     )
     cleaned_out: list[dict[str, Any]] = []
+    excluded_out: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
     seen_content: dict[tuple, str] = {}
+
+    def exclude(
+        conversation_id: str,
+        customer_id: str,
+        messages: list[dict[str, str]],
+        exclusion: Exclusion,
+    ) -> None:
+        report.exclusions.append(exclusion)
+        excluded_out.append({
+            "conversation_id": conversation_id,
+            "customer_id": customer_id,
+            "messages": messages,
+        })
 
     for conversation in conversations:
         conversation_id = conversation["conversation_id"]
@@ -164,7 +189,7 @@ def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
         messages = _clean_messages(conversation_id, conversation["messages"], report)
 
         if not messages:
-            report.exclusions.append(Exclusion(
+            exclude(conversation_id, customer_id, messages, Exclusion(
                 conversation_id,
                 REASON_NO_MESSAGES,
                 detail="every message was empty after normalization",
@@ -172,7 +197,7 @@ def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
             continue
 
         if conversation_id in seen_ids:
-            report.exclusions.append(Exclusion(
+            exclude(conversation_id, customer_id, messages, Exclusion(
                 conversation_id,
                 REASON_DUPLICATE_ID,
                 conversation_id,
@@ -183,7 +208,7 @@ def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
         content_key = (customer_id, tuple((m["role"], m["text"]) for m in messages))
         if content_key in seen_content:
             original = seen_content[content_key]
-            report.exclusions.append(Exclusion(
+            exclude(conversation_id, customer_id, messages, Exclusion(
                 conversation_id,
                 REASON_DUPLICATE_CONTENT,
                 original,
@@ -196,14 +221,14 @@ def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
 
         roles = {message["role"] for message in messages}
         if "agent" not in roles:
-            report.exclusions.append(Exclusion(
+            exclude(conversation_id, customer_id, messages, Exclusion(
                 conversation_id,
                 REASON_INCOMPLETE_NO_AGENT,
                 detail="no agent reply; flagged as incomplete",
             ))
             continue
         if "customer" not in roles:
-            report.exclusions.append(Exclusion(
+            exclude(conversation_id, customer_id, messages, Exclusion(
                 conversation_id,
                 REASON_INCOMPLETE_NO_CUSTOMER,
                 detail="no customer message; flagged as incomplete",
@@ -218,7 +243,7 @@ def clean_conversations(conversations: list[dict[str, Any]]) -> CleaningResult:
 
     report.output_conversations = len(cleaned_out)
     report.output_messages = sum(len(conversation["messages"]) for conversation in cleaned_out)
-    return CleaningResult(conversations=cleaned_out, report=report)
+    return CleaningResult(conversations=cleaned_out, report=report, excluded=excluded_out)
 
 
 def _clean_messages(

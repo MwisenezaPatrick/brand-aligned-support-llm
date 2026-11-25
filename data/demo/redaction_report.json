@@ -1,0 +1,102 @@
+{
+  "cleaned_conversations": 54,
+  "conversations": 58,
+  "counts": {
+    "ADDRESS": 3,
+    "EMAIL": 3,
+    "NAME": 3,
+    "ORDER_REF": 3,
+    "PHONE": 3
+  },
+  "excluded_conversation_ids": [
+    "conv-0050",
+    "conv-0051",
+    "conv-0052",
+    "conv-0058"
+  ],
+  "excluded_conversations": 4,
+  "excluded_file_is_training_input": false,
+  "locations": {
+    "ADDRESS": [
+      {
+        "conversation_id": "conv-0012",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0032",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0052",
+        "message_index": 0
+      }
+    ],
+    "EMAIL": [
+      {
+        "conversation_id": "conv-0020",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0040",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0060",
+        "message_index": 0
+      }
+    ],
+    "NAME": [
+      {
+        "conversation_id": "conv-0008",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0028",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0048",
+        "message_index": 0
+      }
+    ],
+    "ORDER_REF": [
+      {
+        "conversation_id": "conv-0016",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0036",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0056",
+        "message_index": 0
+      }
+    ],
+    "PHONE": [
+      {
+        "conversation_id": "conv-0004",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0024",
+        "message_index": 0
+      },
+      {
+        "conversation_id": "conv-0044",
+        "message_index": 0
+      }
+    ]
+  },
+  "messages": 113,
+  "outputs": {
+    "excluded_conversations": "data/demo/excluded_conversations_redacted.jsonl",
+    "report": "data/demo/redaction_report.json",
+    "retained_conversations": "data/demo/conversations_redacted.jsonl"
+  },
+  "redaction_version": "1",
+  "scope": "every conversation that passed the loader, retained and excluded",
+  "source_file": "data/demo/conversations.jsonl",
+  "total_redactions": 15,
+  "training_input_file": "data/demo/conversations_redacted.jsonl"
+}
