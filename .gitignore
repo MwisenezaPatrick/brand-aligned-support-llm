@@ -34,3 +34,10 @@ evaluation/reports/
 Thumbs.db
 
 !.env.example
+
+# Preserve project directory structure
+!artifacts/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!evaluation/reports/
+!evaluation/reports/.gitkeep
