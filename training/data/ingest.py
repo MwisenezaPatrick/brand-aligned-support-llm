@@ -1,4 +1,4 @@
-"""Load customer-support conversations from CSV files.
+"""Load customer-support conversations from CSV, JSON, and JSONL files.
 
 This module reads files and returns canonical conversations (the shape
 described in training/data/schema.py). It does not clean text, remove
@@ -60,6 +60,7 @@ Error rules
 from __future__ import annotations
 
 import csv
+import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -311,3 +312,178 @@ def _check_row(
         "text": text,
         "sort_key": sort_key,
     }, []
+
+
+# ---------------------------------------------------------------------------
+# JSON arrays and JSONL files
+# ---------------------------------------------------------------------------
+#
+# JSON file: one top-level array. Each element is a conversation in the
+# canonical shape:
+#
+#     [
+#       {
+#         "conversation_id": "conv-0001",
+#         "customer_id": "cust-0001",
+#         "messages": [
+#           {"role": "customer", "text": "Does the kettle come with a lid?"},
+#           {"role": "agent", "text": "Yes, it does."}
+#         ]
+#       }
+#     ]
+#
+# JSONL file: one conversation object per line, in the same shape.
+#
+# Rules for both formats:
+# - Every record is checked with validate_conversation(). A failing record is
+#   reported and skipped; the other records still load.
+# - Only conversation_id, customer_id, messages, and each message's role and
+#   text are copied to the output. Other fields in the source are ignored.
+#   The source file is never modified.
+# - Messages keep the order they have in the file.
+# - Two records with the same conversation_id both load. Detecting duplicate
+#   records is the cleaning step's job.
+# - A UTF-8 byte order mark is accepted.
+# - Blank lines in JSONL are skipped silently.
+#
+# Error reporting:
+# - JSONL errors carry the physical line number.
+# - A JSON array has no line numbers for its elements, so element errors are
+#   reported by record number: the 1-based position in the array.
+# - If the JSON text cannot be parsed at all, the error carries the line
+#   number from the parser and no conversations are returned.
+
+_BYTE_ORDER_MARK = "\ufeff"
+
+
+def load_json(path: str | Path) -> IngestResult:
+    """Load one JSON file containing an array of conversations. The file is read only."""
+    path = Path(path)
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            return parse_json(handle.read(), source=str(path))
+    except FileNotFoundError:
+        return _file_error(path, f"file not found: {path}")
+    except UnicodeDecodeError as exc:
+        return _file_error(path, f"file is not valid UTF-8 (problem at byte {exc.start})")
+    except OSError as exc:
+        return _file_error(path, f"cannot read file: {exc}")
+
+
+def parse_json(text: str, source: str = "<string>") -> IngestResult:
+    """Parse JSON text whose top-level value is an array of conversations."""
+    result = IngestResult(source=source)
+    text = text.lstrip(_BYTE_ORDER_MARK)
+
+    if not text.strip():
+        result.errors.append(IngestError(None, "file is empty"))
+        return result
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        result.errors.append(
+            IngestError(exc.lineno, f"invalid JSON: {exc.msg} (column {exc.colno})")
+        )
+        return result
+
+    if not isinstance(data, list):
+        result.errors.append(
+            IngestError(None, f"top-level value must be a JSON array, got {_json_type(data)}")
+        )
+        return result
+
+    for record_number, record in enumerate(data, start=1):
+        result.rows_read += 1
+        errors = validate_conversation(record)
+        if errors:
+            problems = "; ".join(str(error) for error in errors)
+            result.errors.append(
+                IngestError(None, f"record {record_number}{_id_hint(record)}: {problems}")
+            )
+            continue
+        result.conversations.append(_canonical(record))
+        result.rows_accepted += 1
+
+    return result
+
+
+def load_jsonl(path: str | Path) -> IngestResult:
+    """Load one JSONL file with one conversation per line. The file is read only."""
+    path = Path(path)
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            return parse_jsonl(handle, source=str(path))
+    except FileNotFoundError:
+        return _file_error(path, f"file not found: {path}")
+    except UnicodeDecodeError as exc:
+        return _file_error(path, f"file is not valid UTF-8 (problem at byte {exc.start})")
+    except OSError as exc:
+        return _file_error(path, f"cannot read file: {exc}")
+
+
+def parse_jsonl(stream: TextIO, source: str = "<stream>") -> IngestResult:
+    """Parse JSONL text from an open text stream, one conversation per line."""
+    result = IngestResult(source=source)
+    saw_content = False
+
+    for line_number, raw_line in enumerate(stream, start=1):
+        if line_number == 1:
+            raw_line = raw_line.lstrip(_BYTE_ORDER_MARK)
+        line = raw_line.strip()
+        if not line:
+            continue
+        saw_content = True
+        result.rows_read += 1
+
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as exc:
+            result.errors.append(
+                IngestError(line_number, f"invalid JSON: {exc.msg} (column {exc.colno})")
+            )
+            continue
+
+        errors = validate_conversation(record)
+        if errors:
+            problems = "; ".join(str(error) for error in errors)
+            result.errors.append(IngestError(line_number, problems))
+            continue
+
+        result.conversations.append(_canonical(record))
+        result.rows_accepted += 1
+
+    if not saw_content:
+        result.errors.append(IngestError(None, "file is empty"))
+    return result
+
+
+def _canonical(record: dict[str, Any]) -> dict[str, Any]:
+    """Copy only the canonical fields, in the same shape the CSV loader returns."""
+    return {
+        "conversation_id": record["conversation_id"],
+        "customer_id": record["customer_id"],
+        "messages": [
+            {"role": message["role"], "text": message["text"]}
+            for message in record["messages"]
+        ],
+    }
+
+
+def _json_type(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "a boolean"
+    if isinstance(value, (int, float)):
+        return "a number"
+    if isinstance(value, str):
+        return "a string"
+    return "an object"
+
+
+def _id_hint(record: Any) -> str:
+    """Name the conversation in an error message when its ID is readable."""
+    if isinstance(record, dict) and isinstance(record.get("conversation_id"), str):
+        return f" (conversation_id {record['conversation_id']!r})"
+    return ""
