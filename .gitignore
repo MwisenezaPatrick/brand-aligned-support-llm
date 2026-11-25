@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment secrets
+.env
+.env.*
+
+# Model files
+*.safetensors
+*.bin
+*.gguf
+*.pt
+*.pth
+*.ckpt
+
+# Training artifacts
+artifacts/*
+!artifacts/README.md
+
+# Private datasets
+data/raw/*
+data/processed/*
+data/*.jsonl
+
+# Generated reports
+evaluation/reports/
+
+# IDE and system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+!.env.example
