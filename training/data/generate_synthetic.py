@@ -8,6 +8,13 @@ which .gitignore excludes.
 The script plants known problems and records each one in planted_issues.json, so
 later tests can check that the cleaning pipeline finds them.
 
+Uniqueness guarantee: apart from the planted duplicate, no two generated
+conversations share a customer and identical messages. When a random draw would
+repeat an earlier conversation by chance, the draw is repeated. Two kinds of
+record are exempt: the planted duplicate, which is a deliberate copy, and the
+records the loader rejects on purpose (invalid role, empty message), which never
+reach the cleaner.
+
 Run from the project root:
     python training/data/generate_synthetic.py
 """
@@ -24,6 +31,7 @@ OUT_DIR = ROOT / "data" / "demo"
 SEED = 42
 BRAND = "DemoBrand"
 NUM_CONVERSATIONS = 60
+MAX_REDRAWS = 100
 
 INCOMPLETE_IDS = {50, 51, 52}
 EMPTY_MESSAGE_ID = 55
@@ -31,6 +39,10 @@ DUPLICATE_ID, DUPLICATE_OF = 58, 3
 INVALID_ROLE_ID = 21
 PII_KINDS = ["email", "phone", "name", "address", "order"]
 
+# Conversations exempt from the uniqueness redraw (see the module docstring).
+_UNCHECKED_IDS = {INVALID_ROLE_ID, EMPTY_MESSAGE_ID, DUPLICATE_ID}
+
+CUSTOMER_IDS = [f"cust-{i:04d}" for i in range(1, 31)]
 FIRST_NAMES = ["Amina", "Brian", "Cynthia", "David", "Esther", "Felix", "Grace", "Hassan", "Irene", "John"]
 LAST_NAMES = ["Otieno", "Mwangi", "Kamau", "Wekesa", "Njeri", "Odhiambo", "Achieng", "Kiptoo"]
 STREETS = ["Riverside Drive", "Ngong Road", "Mombasa Road", "Kenyatta Avenue"]
@@ -96,43 +108,71 @@ def make_pii(rng: random.Random, kind: str) -> tuple[str, str]:
     return f"My order reference is {value}.", value
 
 
+def content_key(record: dict) -> tuple:
+    """Identify a conversation by its customer and its exact messages."""
+    return (record["customer_id"], tuple((m["role"], m["text"]) for m in record["messages"]))
+
+
+def _draw_conversation(rng: random.Random, n: int) -> tuple[dict, str, list[dict]]:
+    """Draw conversation number n.
+
+    The random calls happen in a fixed order: greeting, PII, customer. Keep that
+    order, or the demo file for SEED changes.
+    """
+    conv_id = f"conv-{n:04d}"
+    category, customer_text, agent_text = TEMPLATES[(n - 1) % len(TEMPLATES)]
+    messages = [
+        {"role": "customer", "text": rng.choice(GREETINGS) + customer_text},
+        {"role": "agent", "text": agent_text},
+    ]
+    found: list[dict] = []
+
+    if n % 4 == 0:
+        kind = PII_KINDS[(n // 4) % len(PII_KINDS)]
+        sentence, value = make_pii(rng, kind)
+        messages[0]["text"] += " " + sentence
+        found.append({"conversation_id": conv_id, "issue": f"pii_{kind}", "value": value})
+
+    if n in INCOMPLETE_IDS:
+        messages = messages[:1]
+        found.append({"conversation_id": conv_id, "issue": "incomplete_no_agent_reply"})
+
+    if n == EMPTY_MESSAGE_ID:
+        messages[0]["text"] = ""
+        found.append({"conversation_id": conv_id, "issue": "empty_customer_message"})
+
+    record = {
+        "conversation_id": conv_id,
+        "customer_id": rng.choice(CUSTOMER_IDS),
+        "source": "synthetic-demo",
+        "messages": messages,
+    }
+    return record, category, found
+
+
 def build_records(rng: random.Random) -> tuple[list[dict], list[dict], dict]:
-    customers = [f"cust-{i:04d}" for i in range(1, 31)]
     records: list[dict] = []
     issues: list[dict] = []
     labels: dict[str, str] = {}
+    seen_keys: set[tuple] = set()
 
     for n in range(1, NUM_CONVERSATIONS + 1):
-        conv_id = f"conv-{n:04d}"
-        category, customer_text, agent_text = TEMPLATES[(n - 1) % len(TEMPLATES)]
-        messages = [
-            {"role": "customer", "text": rng.choice(GREETINGS) + customer_text},
-            {"role": "agent", "text": agent_text},
-        ]
-        labels[conv_id] = category
+        record, category, found = _draw_conversation(rng, n)
 
-        if n % 4 == 0:
-            kind = PII_KINDS[(n // 4) % len(PII_KINDS)]
-            sentence, value = make_pii(rng, kind)
-            messages[0]["text"] += " " + sentence
-            issues.append({"conversation_id": conv_id, "issue": f"pii_{kind}", "value": value})
+        if n not in _UNCHECKED_IDS:
+            redraws = 0
+            while content_key(record) in seen_keys:
+                redraws += 1
+                if redraws > MAX_REDRAWS:
+                    raise RuntimeError(f"could not draw a unique conversation for conv-{n:04d}")
+                record, category, found = _draw_conversation(rng, n)
+            seen_keys.add(content_key(record))
 
-        if n in INCOMPLETE_IDS:
-            messages = messages[:1]
-            issues.append({"conversation_id": conv_id, "issue": "incomplete_no_agent_reply"})
+        records.append(record)
+        labels[record["conversation_id"]] = category
+        issues.extend(found)
 
-        if n == EMPTY_MESSAGE_ID:
-            messages[0]["text"] = ""
-            issues.append({"conversation_id": conv_id, "issue": "empty_customer_message"})
-
-        records.append({
-            "conversation_id": conv_id,
-            "customer_id": rng.choice(customers),
-            "source": "synthetic-demo",
-            "messages": messages,
-        })
-
-    # Duplicate: conv-0058 repeats conv-0003 word for word.
+    # Planted duplicate: conv-0058 becomes an exact copy of conv-0003.
     duplicate = copy.deepcopy(records[DUPLICATE_OF - 1])
     duplicate["conversation_id"] = f"conv-{DUPLICATE_ID:04d}"
     records[DUPLICATE_ID - 1] = duplicate
