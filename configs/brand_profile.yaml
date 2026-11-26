@@ -1,0 +1,81 @@
+﻿# Synthetic demonstration profile. NairobiTech is a fictional brand used only for testing.
+# It is not a real company. Every fact not listed here is unknown to the assistant.
+profile_version: nairobitech-brand-profile-v1
+synthetic: true
+
+brand:
+  name: NairobiTech (demo)
+  notice: Fictional brand for testing only. Not a real company. Not for customer use.
+  language: English
+
+# Catalogue names only. The assistant knows nothing else about any product.
+catalogue:
+  - 1-litre steel bottle
+  - insulated lunch box
+  - premium kettle
+  - kettle
+  - flask
+  - bag
+  - blender
+
+# Team phrases: an article and a team name. The article is removed for table labels.
+teams:
+  sales_team: the sales team
+  logistics_team: the logistics team
+  support_team: the support team
+  account_team: the account team
+  payments_team: the payments team
+  product_team: the product team
+  senior_team: a senior team member
+
+# Escalation sentences name teams in this order.
+team_order:
+  - sales_team
+  - logistics_team
+  - support_team
+  - account_team
+  - payments_team
+  - product_team
+  - senior_team
+
+# Each topic routes to exactly one team.
+routing:
+  prices_and_discounts: sales_team
+  stock_and_availability: sales_team
+  delivery_dates_and_areas: logistics_team
+  order_status: logistics_team
+  order_cancellation: support_team
+  warranty: support_team
+  refunds_and_returns: support_team
+  opening_hours_and_contact: support_team
+  privacy_and_data_requests: support_team
+  email_and_account_changes: account_team
+  password_and_login: account_team
+  payment_methods: payments_team
+  product_features_and_care: product_team
+  troubleshooting_and_faults: product_team
+  safety_certifications: product_team
+  product_not_in_catalogue: product_team
+  safety_and_injury: senior_team
+  complaints_about_staff_or_repeated_problems: senior_team
+
+# What the assistant does not know, per topic. Keys must match routing exactly.
+not_provided:
+  prices_and_discounts: prices, discounts, and bundle offers
+  stock_and_availability: stock levels and availability of any product
+  delivery_dates_and_areas: delivery days, dates, areas, and costs
+  order_status: order status, tracking, and dispatch
+  order_cancellation: whether an order can be cancelled
+  warranty: warranty length, coverage, and terms
+  refunds_and_returns: refund and return eligibility, timing, and process
+  opening_hours_and_contact: opening hours, phone numbers, email addresses, and chat channels
+  privacy_and_data_requests: what happens to personal data and how data requests are handled
+  email_and_account_changes: email changes and account steps
+  password_and_login: password resets and login help
+  payment_methods: which payment methods are accepted, including M-Pesa and card payments
+  product_features_and_care: features, materials, capacity, care, dishwasher safety, and contents
+  troubleshooting_and_faults: fault diagnosis and repair steps
+  safety_certifications: any safety certification
+  product_not_in_catalogue: any product outside the catalogue names
+  safety_and_injury: any safety advice, emergency guidance, or incident outcome
+  complaints_about_staff_or_repeated_problems: the outcome of any investigation
